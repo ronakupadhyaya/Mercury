@@ -1,6 +1,9 @@
 "use strict";
 var http = require('http');
 var queryString = require('querystring');
+var fs = require('fs');
+
+var Handlebars = require('handlebars');
 module.exports = function () {
   // YOUR CODE HERE
   var getRoutes = [];
@@ -38,10 +41,17 @@ module.exports = function () {
           'Content-Type': 'application/json'});
           res.end(JSON.stringify(obj));
         }
+        res.render = function(name, options){
+          fs.readFile('./views/' + name, 'utf8', function(err, contents){
+            console.log("CONTENTs", contents);
+            var template = Handlebars.compile(contents);
+            res.end(template(options))
+          })
+        }
+
         if(req.method === 'GET') {
           for(var i =0; i <getRoutes.length; i++){
             var query = queryString.parse(req.url);
-            console.log("QUERY", query);
             if(getRoutes[i].use){
               if(getRoutes[i].route.split('/')[1] === req.url.split('/')[1]){
                 req.query = query;
@@ -50,7 +60,6 @@ module.exports = function () {
             } else{
               if(getRoutes[i] === req.url.split('?')[0]){
                 req.query = query;
-                console.log("REQ" ,req);
                 getCallbacks[i](req, res);
                 break;
               }
