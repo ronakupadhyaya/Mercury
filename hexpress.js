@@ -58,11 +58,30 @@ module.exports = function () {
                 getCallbacks[i](req, res);
               }
             } else{
-              if(getRoutes[i] === req.url.split('?')[0]){
-                req.query = query;
-                getCallbacks[i](req, res);
-                break;
+              req.params = {};
+
+              var individualPaths = getRoutes[i].split('/');
+              var hasParams = false;
+              for(var j =0; j<individualPaths.length; j++){
+                if(individualPaths[j][0] === ':'){
+                  req.params[individualPaths[j].slice(1)] = req.url.split('/')[j];
+                  hasParams = true;
+                }
               }
+              if(hasParams){
+                if(getRoutes[i].split('/').length === req.url.split('/').length){
+                  req.query = query;
+                  getCallbacks[i](req, res);
+                  break;
+                }
+              } else {
+                if(getRoutes[i] === req.url.split('?')[0]){
+                  req.query = query;
+                  getCallbacks[i](req, res);
+                  break;
+                }
+              }
+
             }
 
           }
