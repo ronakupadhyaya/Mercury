@@ -19,6 +19,12 @@ module.exports = function () {
       postRoutes.push(route);
       postCallbacks.push(callback);
     },
+    use: function(routePrefix, callback){
+      getRoutes.push({route: routePrefix, use: true});
+      postRoutes.push({route: routePrefix, use: true});
+      getCallbacks.push(callback);
+      postCallbacks.push(callback);
+    },
     listen: function(port){
       var self = this;
       var server=http.createServer(function(req,res){
@@ -36,12 +42,20 @@ module.exports = function () {
           for(var i =0; i <getRoutes.length; i++){
             var query = queryString.parse(req.url);
             console.log("QUERY", query);
-            if(getRoutes[i] === req.url.split('?')[0]){
-              req.query = query;
-              console.log("REQ" ,req);
-              getCallbacks[i](req, res);
-              break;
+            if(getRoutes[i].use){
+              if(getRoutes[i].route.split('/')[1] === req.url.split('/')[1]){
+                req.query = query;
+                getCallbacks[i](req, res);
+              }
+            } else{
+              if(getRoutes[i] === req.url.split('?')[0]){
+                req.query = query;
+                console.log("REQ" ,req);
+                getCallbacks[i](req, res);
+                break;
+              }
             }
+
           }
         }
         if(req.method ==='POST') {
@@ -56,13 +70,24 @@ module.exports = function () {
               req.body = queryString.parse(body);
               for(var i =0; i < postRoutes.length; i++){
                 console.log("req url", req.url)
-                if(postRoutes[i] === req.url){
-                  console.log("hi", body);
-                  req.body = JSON.parse(body);
-                  console.log("req body", req.body);
-                  postCallbacks[i](req, res);
-                  break;
+                if(postRoutes[i].use){
+                  if(postRoutes[i].route.split('/')[1] === req.url.split('/')[1]){
+                    console.log("hi", body);
+                    req.body = JSON.parse(body);
+                    console.log("req body", postCallbacks);
+                    postCallbacks[i](req, res);
+                    break;
+                  }
+                } else{
+                  if(postRoutes[i] === req.url){
+                    console.log("hi", body);
+                    req.body = JSON.parse(body);
+                    console.log("req body", req.body);
+                    postCallbacks[i](req, res);
+                    break;
+                  }
                 }
+
               }
 
           });
